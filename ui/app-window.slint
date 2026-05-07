@@ -1,23 +1,104 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import {
+    Button,
+    VerticalBox,
+    LineEdit,
+    HorizontalBox,
+} from "std-widgets.slint";
 
 export component AppWindow inherits Window {
-    in-out property <int> counter: 66;
-    callback request-increase-value();
+    title: "Rust Tic-Tac-Toe";
+    min-width: 400px;
+    min-height: 500px;
+
+    // Properties for Game Logic
+    in-out property <string> player-one-name: "";
+    in-out property <string> player-two-name: "";
+    in-out property <bool> game-started: false;
+    in-out property <[string]> board: ["", "", "", "", "", "", "", "", ""];
+    in-out property <string> current-turn: "X";
+    in-out property <string> status-msg: "Enter names to start!";
+
+    // Callbacks to Rust
+    callback start-game();
+    callback cell-clicked(int);
+    callback restart-game();
+
     VerticalBox {
+        spacing: 20px;
+        padding: 20px;
+
         Text {
-            text: "Counter: \{root.counter}";
+            text: "Tic-Tac-Toe";
+            font-size: 24px;
+            horizontal-alignment: center;
         }
 
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
+        if !root.game-started: VerticalBox {
+            spacing: 10px;
+            Text {
+                text: "Player (X):";
+            }
+
+            LineEdit {
+                placeholder-text: "Enter name";
+                text <=> root.player-one-name;
+            }
+
+            Text {
+                text: "Player (O):";
+            }
+
+            LineEdit {
+                placeholder-text: "Enter name";
+                text <=> root.player-two-name;
+            }
+
+            Button {
+                text: "Start Match";
+                enabled: root.player-one-name != "" && root.player-two-name != "";
+                clicked => {
+                    root.start-game();
+                }
             }
         }
-        Button {
-            text: "Hola chat";
-            clicked => {
-                root.request-increase-value();
+
+        // --- GAME VIEW ---
+        if root.game-started: VerticalBox {
+            spacing: 15px;
+            Text {
+                text: root.status-msg;
+                horizontal-alignment: center;
+                font-weight: 700;
+            }
+
+            // 3x3 Grid
+            for row in 3: HorizontalBox {
+                spacing: 10px;
+                for col in 3: Rectangle {
+                    width: 80px;
+                    height: 80px;
+                    background: #333;
+                    border-radius: 4px;
+
+                    Text {
+                        text: root.board[row * 3 + col];
+                        font-size: 30px;
+                        color: white;
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.cell-clicked(row * 3 + col);
+                        }
+                    }
+                }
+            }
+
+            Button {
+                text: "Reset Game";
+                clicked => {
+                    root.restart-game();
+                }
             }
         }
     }
